@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env
+.env.local
+.env.*.local
+.hintrc
+.prettierrc*
+.eslintrc*
+.nextjournal*
+Dockerfile*
+docker-compose*
+.gitkeep
+coverage
+.vscode

@@ -1,28 +1,26 @@
 "use client"
 
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { UserPlus, Briefcase, Radio, Zap } from 'lucide-react'
 import type { ComponentType } from 'react'
 
-// Quick-action shortcuts. Each navigates to the page that owns the
-// relevant "create" flow. We deliberately don't try to auto-open any
-// modal on the target page — that'd require touching those pages,
-// which is out of scope here.
 interface Action {
-  label: string
+  tKey: string
   href: string
   icon: ComponentType<{ className?: string }>
   tint: string
 }
 
 const ACTIONS: Action[] = [
-  { label: 'New Contact', href: '/contacts', icon: UserPlus, tint: 'text-primary' },
-  { label: 'New Deal', href: '/pipelines', icon: Briefcase, tint: 'text-blue-400' },
-  { label: 'New Broadcast', href: '/broadcasts/new', icon: Radio, tint: 'text-amber-400' },
-  { label: 'New Automation', href: '/automations/new', icon: Zap, tint: 'text-primary' },
+  { tKey: 'dashboard.newContact', href: '/contacts', icon: UserPlus, tint: 'text-primary' },
+  { tKey: 'dashboard.newDeal', href: '/pipelines', icon: Briefcase, tint: 'text-blue-400' },
+  { tKey: 'dashboard.newBroadcast', href: '/broadcasts/new', icon: Radio, tint: 'text-amber-400' },
+  { tKey: 'dashboard.newAutomation', href: '/automations/new', icon: Zap, tint: 'text-primary' },
 ]
 
 export function QuickActions() {
+  const t = useTranslations();
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {ACTIONS.map((a) => {
@@ -36,7 +34,7 @@ export function QuickActions() {
             <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 ${a.tint}`}>
               <Icon className="h-4 w-4" />
             </div>
-            <span className="text-sm font-medium text-white">{a.label}</span>
+            <span className="text-sm font-medium text-white">{t(a.tKey)}</span>
           </Link>
         )
       })}

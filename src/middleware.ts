@@ -1,8 +1,26 @@
+import createMiddleware from 'next-intl/middleware'
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { routing } from './i18n/routing'
+
+const intlMiddleware = createMiddleware(routing)
+
+function stripLocale(pathname: string): string {
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length > 0 && (routing.locales as readonly string[]).includes(segments[0])) {
+    return '/' + segments.slice(1).join('/')
+  }
+  return pathname
+}
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  const intlResponse = intlMiddleware(request)
+
+  if (intlResponse.status !== 200) {
+    return intlResponse
+  }
+
+  let supabaseResponse = intlResponse
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,7 +31,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -24,29 +42,22 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const path = stripLocale(request.nextUrl.pathname)
 
-  // Auth pages - redirect to dashboard if already logged in
-  if (user && (
-    request.nextUrl.pathname === '/login' ||
-    request.nextUrl.pathname === '/signup' ||
-    request.nextUrl.pathname === '/forgot-password'
-  )) {
+  if (user && (path === '/login' || path === '/signup' || path === '/forgot-password')) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = path === request.nextUrl.pathname ? '/dashboard' : request.nextUrl.pathname.replace(/\/[^/]+/, '') + '/dashboard'
     return NextResponse.redirect(url)
   }
 
-  // Protected pages - redirect to login if not authenticated
   const protectedPaths = ['/dashboard', '/inbox', '/contacts', '/pipelines', '/broadcasts', '/automations', '/settings']
-  if (!user && protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+  if (!user && protectedPaths.some(p => path.startsWith(p))) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = path === request.nextUrl.pathname ? '/login' : request.nextUrl.pathname.replace(/\/[^/]+/, '') + '/login'
     return NextResponse.redirect(url)
   }
 
-  // API routes that need auth (not webhooks)
-  if (!user && request.nextUrl.pathname.startsWith('/api/whatsapp/') &&
-      !request.nextUrl.pathname.includes('/webhook')) {
+  if (!user && path.startsWith('/api/whatsapp/') && !path.includes('/webhook')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

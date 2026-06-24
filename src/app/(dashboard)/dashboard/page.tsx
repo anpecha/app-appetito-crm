@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import {
   MessageSquare,
@@ -35,6 +36,7 @@ import { ActivityFeed } from '@/components/dashboard/activity-feed'
 type RangeDays = 7 | 30 | 90
 
 export default function DashboardPage() {
+  const t = useTranslations();
   const [metrics, setMetrics] = useState<MetricsBundle | null>(null)
   const [metricsLoading, setMetricsLoading] = useState(true)
 
@@ -119,9 +121,9 @@ export default function DashboardPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-white">{t("dashboard.title")}</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Live analytics across conversations, contacts, deals, broadcasts, and automations.
+          {t("dashboard.description")}
         </p>
       </div>
 
@@ -132,16 +134,16 @@ export default function DashboardPage() {
         ) : (
           <>
             <MetricCard
-              title="Active Conversations"
+              title={t("dashboard.activeConversations")}
               value={metrics.activeConversations.current.toLocaleString()}
               icon={MessageSquare}
               delta={{
                 sign: metrics.activeConversations.previous,
-                label: deltaLabel(metrics.activeConversations.previous, 'new today vs yesterday'),
+                label: deltaLabel(metrics.activeConversations.previous, t, "dashboard.newTodayVsYesterday"),
               }}
             />
             <MetricCard
-              title="New Contacts Today"
+              title={t("dashboard.newContactsToday")}
               value={metrics.newContactsToday.current.toLocaleString()}
               icon={UserPlus}
               delta={{
@@ -149,18 +151,19 @@ export default function DashboardPage() {
                   metrics.newContactsToday.current - metrics.newContactsToday.previous,
                 label: deltaLabel(
                   metrics.newContactsToday.current - metrics.newContactsToday.previous,
-                  'vs yesterday',
+                  t,
+                  "dashboard.vsYesterday",
                 ),
               }}
             />
             <MetricCard
-              title="Open Deals Value"
+              title={t("dashboard.openDealsValue")}
               value={formatCurrency(metrics.openDealsValue)}
               icon={DollarSign}
-              subtitle={`${metrics.openDealsCount} open deal${metrics.openDealsCount === 1 ? '' : 's'}`}
+              subtitle={t("dashboard.openDealsCount", { count: metrics.openDealsCount })}
             />
             <MetricCard
-              title="Messages Sent Today"
+              title={t("dashboard.messagesSentToday")}
               value={metrics.messagesSentToday.current.toLocaleString()}
               icon={Send}
               delta={{
@@ -168,7 +171,8 @@ export default function DashboardPage() {
                   metrics.messagesSentToday.current - metrics.messagesSentToday.previous,
                 label: deltaLabel(
                   metrics.messagesSentToday.current - metrics.messagesSentToday.previous,
-                  'vs yesterday',
+                  t,
+                  "dashboard.vsYesterday",
                 ),
               }}
             />
@@ -211,8 +215,8 @@ export default function DashboardPage() {
 
 // ------------------------------------------------------------
 
-function formatCurrency(v: number): string {
-  return new Intl.NumberFormat(undefined, {
+function formatCurrency(v: number, locale?: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 0,
@@ -220,8 +224,8 @@ function formatCurrency(v: number): string {
   }).format(v)
 }
 
-function deltaLabel(delta: number, suffix: string): string {
-  if (delta === 0) return `No change ${suffix}`
+function deltaLabel(delta: number, t: ReturnType<typeof useTranslations>, suffixTKey: string): string {
+  if (delta === 0) return t("dashboard.noChange")
   const sign = delta > 0 ? '+' : ''
-  return `${sign}${delta.toLocaleString()} ${suffix}`
+  return `${sign}${delta.toLocaleString()} ${t(suffixTKey)}`
 }
