@@ -23,7 +23,7 @@ ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
 ENV META_APP_SECRET=$META_APP_SECRET
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN npx next build --webpack
 
 FROM node:20-alpine AS runner
 WORKDIR /app
