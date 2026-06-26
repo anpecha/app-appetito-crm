@@ -20,7 +20,18 @@ export async function middleware(request: NextRequest) {
     return intlResponse
   }
 
+  const locale = request.cookies.get('NEXT_LOCALE')?.value || routing.defaultLocale
+  const isRewrite = intlResponse.headers.has('x-middleware-rewrite')
+
   let supabaseResponse = intlResponse
+
+  if (isRewrite) {
+    request.headers.set('X-NEXT-INTL-LOCALE', locale)
+    supabaseResponse = NextResponse.next({ request })
+    for (const cookie of intlResponse.cookies.getAll()) {
+      supabaseResponse.cookies.set(cookie.name, cookie.value)
+    }
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
