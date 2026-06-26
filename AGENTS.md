@@ -8,3 +8,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - `npx next build --webpack` — SWC binary corrupt on this Windows VM; must use `--webpack` to fall back to webpack
 - `useSearchParams` comes from `next/navigation`, NOT from `@/i18n/navigation` (next-intl does not re-export it)
+
+## Next.js version history
+
+| Version | Status | Issue |
+|---------|--------|-------|
+| 16.2.6 | BAD | Standalone `output` + middleware rewrite bug (#94342) — all routes return 404 on Render |
+| 16.2.5 | GOOD | Last stable version without the rewrite bug — **use this for Docker/standalone deploys** |
