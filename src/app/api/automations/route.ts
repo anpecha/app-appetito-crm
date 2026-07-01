@@ -30,6 +30,19 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Check automation quota before creating
+  const { data: quotaOk } = await supabase.rpc('check_quota', {
+    p_user_id: user.id,
+    p_metric_name: 'max_automations',
+    p_required: 1,
+  })
+  if (quotaOk === false) {
+    return NextResponse.json(
+      { error: 'Automation quota exceeded for this plan' },
+      { status: 403 }
+    )
+  }
+
   const body = await request.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
 
@@ -103,6 +116,13 @@ export async function POST(request: Request) {
     const err = await insertSteps(automation.id, effectiveSteps)
     if (err) return NextResponse.json({ error: err }, { status: 500 })
   }
+
+  // Increment automation usage
+  await supabase.rpc('increment_usage', {
+    p_user_id: user.id,
+    p_metric_name: 'max_automations',
+    p_increment: 1,
+  })
 
   return NextResponse.json({ automation }, { status: 201 })
 }

@@ -879,6 +879,13 @@ async function findOrCreateContact(
     return null
   }
 
+  // Increment contact usage for auto-created contacts
+  await supabaseAdmin().rpc('increment_usage', {
+    p_user_id: userId,
+    p_metric_name: 'max_contacts',
+    p_increment: 1,
+  })
+
   return { contact: newContact, wasCreated: true }
 }
 

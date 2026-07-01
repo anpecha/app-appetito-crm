@@ -283,6 +283,13 @@ export async function POST(request: Request) {
       })
       .eq('id', conversation_id)
 
+    // Increment message usage
+    await supabase.rpc('increment_usage', {
+      p_user_id: user.id,
+      p_metric_name: 'max_messages_monthly',
+      p_increment: 1,
+    })
+
     // Pause any active Flow run for this contact — the agent stepping
     // in is the strongest "yield, human is here" signal. See PR #2
     // plan for why we pause (not end): preserves diagnostic state +

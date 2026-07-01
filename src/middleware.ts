@@ -55,13 +55,13 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = stripLocale(request.nextUrl.pathname)
 
-  if (user && (path === '/login' || path === '/signup' || path === '/forgot-password')) {
+  if (user && (path === '/' || path === '/login' || path === '/signup' || path === '/forgot-password')) {
     const url = request.nextUrl.clone()
     url.pathname = path === request.nextUrl.pathname ? '/dashboard' : request.nextUrl.pathname.replace(/\/[^/]+/, '') + '/dashboard'
     return NextResponse.redirect(url)
   }
 
-  const protectedPaths = ['/dashboard', '/inbox', '/contacts', '/pipelines', '/broadcasts', '/automations', '/settings']
+  const protectedPaths = ['/dashboard', '/inbox', '/contacts', '/pipelines', '/broadcasts', '/automations', '/settings', '/admin', '/billing', '/onboarding']
   if (!user && protectedPaths.some(p => path.startsWith(p))) {
     const url = request.nextUrl.clone()
     url.pathname = path === request.nextUrl.pathname ? '/login' : request.nextUrl.pathname.replace(/\/[^/]+/, '') + '/login'

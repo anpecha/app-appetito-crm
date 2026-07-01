@@ -107,6 +107,15 @@ export function ContactForm({
           .eq('id', contactId);
         if (error) throw error;
       } else {
+        // Check contact quota before creating
+        const { data: quotaOk } = await supabase.rpc('check_quota', {
+          p_user_id: user.id,
+          p_metric_name: 'max_contacts',
+          p_required: 1,
+        });
+        if (quotaOk === false) {
+          throw new Error('Contact quota exceeded for your plan');
+        }
         const { data, error } = await supabase
           .from('contacts')
           .insert({
@@ -120,6 +129,12 @@ export function ContactForm({
           .single();
         if (error) throw error;
         contactId = data.id;
+        // Increment contact usage for new contacts
+        await supabase.rpc('increment_usage', {
+          p_user_id: user.id,
+          p_metric_name: 'max_contacts',
+          p_increment: 1,
+        });
       }
 
       // Sync tags

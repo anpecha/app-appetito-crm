@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -14,6 +15,7 @@ import { Header } from "@/components/layout/header";
 function DashboardShellInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations();
 
   // Sidebar drawer state — only used on mobile. On lg+ the sidebar is
@@ -26,6 +28,20 @@ function DashboardShellInner({ children }: { children: React.ReactNode }) {
       router.push("/login");
     }
   }, [user, loading, router]);
+
+  // Onboarding redirect: if user is logged in and not already on
+  // the onboarding page, check whether onboarding is complete.
+  useEffect(() => {
+    if (loading || !user || pathname === "/onboarding") return;
+    fetch("/api/onboarding")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.onboarding_completed) {
+          router.push("/onboarding");
+        }
+      })
+      .catch(() => {});
+  }, [user, loading, pathname, router]);
 
   if (loading) {
     return (

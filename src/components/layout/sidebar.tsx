@@ -15,6 +15,8 @@ import {
   Zap,
   Workflow,
   Settings,
+  CreditCard,
+  Shield,
   LogOut,
   User,
   X,
@@ -50,6 +52,8 @@ const navItems: NavItem[] = [
 ];
 
 const bottomNavItems = [
+  { href: "/billing", tKey: "nav.billing", icon: CreditCard },
+  { href: "/admin", tKey: "nav.admin", icon: Shield },
   { href: "/settings", tKey: "nav.settings", icon: Settings },
 ];
 

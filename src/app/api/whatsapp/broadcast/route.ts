@@ -69,6 +69,19 @@ export async function POST(request: Request) {
       return rateLimitResponse(limit)
     }
 
+    // Check broadcast quota before proceeding
+    const { data: quotaOk } = await supabase.rpc('check_quota', {
+      p_user_id: user.id,
+      p_metric_name: 'max_broadcasts_monthly',
+      p_required: 1,
+    })
+    if (quotaOk === false) {
+      return NextResponse.json(
+        { error: 'Broadcast quota exceeded for this month' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const {
       recipients: newRecipients,
@@ -193,6 +206,13 @@ export async function POST(request: Request) {
         failedCount++
       }
     }
+
+    // Increment broadcast usage
+    await supabase.rpc('increment_usage', {
+      p_user_id: user.id,
+      p_metric_name: 'max_broadcasts_monthly',
+      p_increment: 1,
+    })
 
     return NextResponse.json({
       success: true,
